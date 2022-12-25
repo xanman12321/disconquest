@@ -1,5 +1,8 @@
 import random
 
+def getfriendlyneighbors(m,c,t):
+    return list(set().intersection(getneighbors(m, t), allofcolor(m, c)))
+
 def getneighbors(m,t): #takes position
     width = len(m.split("\n")[0])+1
     return [t-1, t+1, t-width, t+width]

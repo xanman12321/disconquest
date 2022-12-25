@@ -18,6 +18,9 @@ client.games = {}
 client.drawsettings = {
     "size": 20
 }
+client.settings = {
+    "expansiveness": 3
+}
 
 testmap = """111111110011
 111110110111
@@ -39,6 +42,13 @@ class Game:
         self.col = col
         self.key = dict(zip(self.nations,self.col))
         self.year = year
+    def refresh(self):
+        self.key = dict(zip(self.nations, self.col))
+    def freecol(self):
+        while True:
+            c = random.choice(list(self.key.keys()))
+            if c not in self.nations:
+                return self.key[c]
 
 @client.event
 async def on_ready():
@@ -70,13 +80,30 @@ async def run(ctx: discord.Interaction):
         return d.c.names[game.key[n]]
     def setpos(pos,c):
         return game.map[:pos] + c + game.map[pos + 1:]
+    def expand(n,strength=1,o=False):
+        if o:
+            t = random.choice(m.getfriendlyneighbors(game.map,color(n),o))
+        else:
+            t = random.choice(m.allofcolor(game.map, color(n)))
+        game.map = setpos(m.rlandneighbor(game.map, t), color(n))
+        if strength > 1 and m.getfriendlyneighbors(game.map,color(n),t):
+            expand(n,strength=strength-1,o=t)
 
     #auto stuff
     game.year += 1
     if game.year > 1:
         for i in game.nations:
-            t = random.choice(m.allofcolor(game.map,color(i)))
-            game.map = setpos(m.rlandneighbor(game.map,t),color(i))
+            if not m.allofcolor(game.map, color(i)):
+                del game.nations[game.nations.index(i)]
+                continue
+            exp = client.settings["expansiveness"]
+            for _ in range(random.randint(0,round(exp*1.5))):
+                expand(i,strength=2)
+        if random.random() < 0.1 and len(game.nations) < 5:
+            n = g.word().title()
+            game.nations.append(n)
+            game.col.append(game.freecol())
+            game.refresh()
 
     #draw
     img = d.drawr(d.convert(game.map),settings=client.drawsettings)
@@ -84,7 +111,7 @@ async def run(ctx: discord.Interaction):
         await ctx.response.send_message(f"An error occurred: {img}")
     else:
         img.save("temp.png")
-        await ctx.response.send_message(f"Year {game.year}\nNations: {nl.join([f'{i} ({j})' for i, j in zip(game.nations,game.col)])}", file=discord.File("temp.png"))
+        await ctx.response.send_message(f"Year {game.year}\nNations:\n{nl.join([f'{i} ({j})' for i, j in zip(game.nations,game.col)])}", file=discord.File("temp.png"))
 
 client.tree.add_command(run)
 
