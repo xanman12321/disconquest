@@ -6,6 +6,7 @@ from discord.ext import commands
 import draw as d
 import gen as g
 import map as m
+import token
 
 nl = '\n'
 
@@ -87,4 +88,4 @@ async def run(ctx: discord.Interaction):
 
 client.tree.add_command(run)
 
-client.run("MTA1NjM0MzQxMTMwMjYwODk1Ng.GLwnfO.h07UJJ79dwxwORgyxpinumAmw4zjlemrrL9JjI")
+client.run(token.token)
